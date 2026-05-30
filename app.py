@@ -953,6 +953,33 @@ FIN_HISTORY_DIR = Path(__file__).parent / "fin_history"
 FIN_HISTORY_DIR.mkdir(exist_ok=True)
 
 def main():
+    # ── 비밀번호 인증 ─────────────────────────────────────────────────────────
+    _PWD = st.secrets.get("app_password", "nudique0421!!")
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+    if not st.session_state["authenticated"]:
+        st.markdown(
+            "<div style='max-width:360px;margin:100px auto 0;padding:40px;"
+            "background:#fff;border-radius:12px;"
+            "box-shadow:0 4px 24px rgba(0,0,0,0.10);text-align:center;'>"
+            "<h2 style='color:#1a1a2e;margin-bottom:6px;'>🔐 비엔코 대시보드</h2>"
+            "<p style='color:#888;font-size:0.9rem;margin-bottom:20px;'>"
+            "접근하려면 비밀번호를 입력하세요</p></div>",
+            unsafe_allow_html=True)
+        _c = st.columns([1, 2, 1])[1]
+        with _c:
+            _pw = st.text_input("pw", type="password",
+                                placeholder="비밀번호 입력",
+                                label_visibility="collapsed")
+            if st.button("로그인", use_container_width=True, type="primary"):
+                if _pw == _PWD:
+                    st.session_state["authenticated"] = True
+                    st.rerun()
+                else:
+                    st.error("❌ 비밀번호가 틀렸습니다.")
+        st.stop()
+    # ── 인증 완료 ─────────────────────────────────────────────────────────────
+
     today      = date.today()
     total_days = calendar.monthrange(today.year, today.month)[1]
     month_label = f"{today.year}년 {today.month}월"
