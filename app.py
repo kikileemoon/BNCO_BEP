@@ -958,25 +958,71 @@ def main():
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
     if not st.session_state["authenticated"]:
-        st.markdown(
-            "<div style='max-width:360px;margin:100px auto 0;padding:40px;"
-            "background:#fff;border-radius:12px;"
-            "box-shadow:0 4px 24px rgba(0,0,0,0.10);text-align:center;'>"
-            "<h2 style='color:#1a1a2e;margin-bottom:6px;'>🔐 비엔코 대시보드</h2>"
-            "<p style='color:#888;font-size:0.9rem;margin-bottom:20px;'>"
-            "접근하려면 비밀번호를 입력하세요</p></div>",
-            unsafe_allow_html=True)
-        _c = st.columns([1, 2, 1])[1]
+        st.markdown("""
+<style>
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+}
+[data-testid="stHeader"] { background: transparent; }
+.login-wrap {
+    max-width: 420px;
+    margin: 80px auto 0;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 52px 44px 44px;
+    backdrop-filter: blur(16px);
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+}
+.login-logo {
+    font-size: 2.6rem;
+    margin-bottom: 6px;
+}
+.login-title {
+    color: #ffffff;
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+.login-sub {
+    color: rgba(255,255,255,0.45);
+    font-size: 0.82rem;
+    margin-bottom: 36px;
+    letter-spacing: 0.3px;
+}
+.login-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    margin: 0 0 28px;
+}
+</style>
+<div class="login-wrap">
+  <div class="login-logo">📊</div>
+  <div class="login-title">(주)비엔코 경영 Report</div>
+  <div class="login-sub">Business Performance Dashboard</div>
+  <div class="login-divider"></div>
+</div>
+""", unsafe_allow_html=True)
+
+        _l, _c, _r = st.columns([1, 2, 1])
         with _c:
+            st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
             _pw = st.text_input("pw", type="password",
-                                placeholder="비밀번호 입력",
+                                placeholder="🔑  비밀번호 입력",
                                 label_visibility="collapsed")
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
             if st.button("로그인", use_container_width=True, type="primary"):
                 if _pw == _PWD:
                     st.session_state["authenticated"] = True
                     st.rerun()
                 else:
-                    st.error("❌ 비밀번호가 틀렸습니다.")
+                    st.error("비밀번호가 올바르지 않습니다.")
+            st.markdown(
+                "<p style='color:rgba(255,255,255,0.25);font-size:0.75rem;"
+                "text-align:center;margin-top:20px;'>© (주)비엔코  |  Internal Use Only</p>",
+                unsafe_allow_html=True)
         st.stop()
     # ── 인증 완료 ─────────────────────────────────────────────────────────────
 
