@@ -1032,12 +1032,14 @@ def main():
 
     # ── 데이터 로드 ──
     with st.spinner("📡 구글시트 데이터 연결 중..."):
-        # 현재 월 탭 자동 탐색 (예: "6월", "26년6월", "Jun" 등 다양한 형식 대응)
+        # 현재 월 탭 자동 탐색 — 다양한 탭명 형식 대응
+        # 예: "2026.06 매출", "26.06 매출", "6월", "2026-06" 등
         _month_keywords = [
-            f"{today.month}월",
-            f"{str(today.year)[2:]}년{today.month}월",
-            f"{today.year}년{today.month}월",
-            f"{today.year}-{today.month:02d}",
+            f"{today.year}.{today.month:02d}",   # 2026.06 ← 현재 시트 형식
+            f"{str(today.year)[2:]}.{today.month:02d}",  # 26.06
+            f"{today.year}-{today.month:02d}",    # 2026-06
+            f"{today.month}월",                   # 6월
+            f"{str(today.year)[2:]}년{today.month}월",  # 26년6월
         ]
         daily_raw, daily_err = None, None
         for _kw in _month_keywords:
