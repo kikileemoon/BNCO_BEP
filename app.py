@@ -1032,8 +1032,20 @@ def main():
 
     # ── 데이터 로드 ──
     with st.spinner("📡 구글시트 데이터 연결 중..."):
-        # gid=691148605 로 5월 탭 직접 지정 (탭 이름 검색보다 확실)
-        daily_raw, daily_err = load_sheet_data(SHEET_IDS['daily_sales'], by_gid=691148605)
+        # 현재 월 탭 자동 탐색 (예: "6월", "26년6월", "Jun" 등 다양한 형식 대응)
+        _month_keywords = [
+            f"{today.month}월",
+            f"{str(today.year)[2:]}년{today.month}월",
+            f"{today.year}년{today.month}월",
+            f"{today.year}-{today.month:02d}",
+        ]
+        daily_raw, daily_err = None, None
+        for _kw in _month_keywords:
+            daily_raw, daily_err = load_sheet_data(SHEET_IDS['daily_sales'], tab_keyword=_kw)
+            if daily_raw is not None:
+                break
+        if daily_raw is None:
+            daily_raw, daily_err = load_sheet_data(SHEET_IDS['daily_sales'])
         pl_raw,    pl_err    = load_sheet_data(SHEET_IDS['historical_pl'], by_gid=916327002)
 
     sales  = parse_daily_sales(daily_raw)
