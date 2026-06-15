@@ -1918,11 +1918,21 @@ def main():
                 })
             st.markdown("**📋 누적 월별 당기순손익 요약**")
             _df_tbl = pd.DataFrame(tbl_rows)
-            _red_bold = "color: #dc3545; font-weight: bold"
-            _styled = _df_tbl.style.map(
-                lambda _: _red_bold,
-                subset=["당기순손익(만)", "순이익률"]
-            )
+            # 월별 실수값 (부호 판단용)
+            _net_num = {m: gh(m, "당기순손익") for m in all_months}
+            def _style_net(row):
+                n = _net_num.get(row["월"], 0.0)
+                styles = [""] * len(row)
+                if n != 0.0:
+                    # 흑자(양수)=빨강, 손실(음수)=파랑
+                    clr = "#dc3545" if n > 0 else "#0d6efd"
+                    css = f"color: {clr}; font-weight: bold"
+                    cols = list(row.index)
+                    for _col in ["당기순손익(만)", "순이익률"]:
+                        if _col in cols:
+                            styles[cols.index(_col)] = css
+                return styles
+            _styled = _df_tbl.style.apply(_style_net, axis=1)
             st.dataframe(_styled, use_container_width=True, hide_index=True)
 
             st.markdown("---")
