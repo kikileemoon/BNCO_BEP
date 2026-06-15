@@ -1917,7 +1917,13 @@ def main():
                     "순이익률":       f"{n/r*100:.1f}%" if (r and n != 0.0) else "-",
                 })
             st.markdown("**📋 누적 월별 당기순손익 요약**")
-            st.dataframe(pd.DataFrame(tbl_rows), use_container_width=True, hide_index=True)
+            _df_tbl = pd.DataFrame(tbl_rows)
+            _red_bold = "color: #dc3545; font-weight: bold"
+            _styled = _df_tbl.style.map(
+                lambda _: _red_bold,
+                subset=["당기순손익(만)", "순이익률"]
+            )
+            st.dataframe(_styled, use_container_width=True, hide_index=True)
 
             st.markdown("---")
 
