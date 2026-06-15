@@ -767,6 +767,7 @@ def parse_financial_excel(uploaded_file) -> Optional[dict]:
             "견본비":     ["견본비"],
             "용역수수료": ["용역수수료"],
             "영업손익":   ["영업손실", "영업이익"],
+            "당기순손익":  ["당기순이익", "당기순손실", "당기순손익"],
         }
 
         found = {k: None for k in KEYWORDS}
@@ -785,8 +786,8 @@ def parse_financial_excel(uploaded_file) -> Optional[dict]:
                         rd[m] = float(v) if isinstance(v, (int, float)) else 0.0
                     tot = ws.cell(row, 2).value
                     rd["계"] = float(tot) if isinstance(tot, (int, float)) else 0.0
-                    # 영업손실은 음수로 저장
-                    if key == "영업손익" and "손실" in label:
+                    # 손실 항목은 음수로 저장
+                    if key in ("영업손익", "당기순손익") and "손실" in label:
                         rd = {k: -abs(v) for k, v in rd.items()}
                     found[key] = rd
                     break
@@ -864,7 +865,7 @@ _FIN_ITEMS = [
     "직원급여","상여금","퇴직급여","복리후생비","여비교통비","접대비",
     "통신비","세금과공과금","감가상각비","지급임차료","보험료","운반비",
     "교육훈련비","소모품비","지급수수료","광고선전비","수출제비용",
-    "판매수수료","견본비","용역수수료","영업손익",
+    "판매수수료","견본비","용역수수료","영업손익","당기순손익",
 ]
 
 def save_fin_month(month: str, filename: str, item_data: dict) -> None:
@@ -1899,19 +1900,22 @@ def main():
             tbl_rows = []
             for m in all_months:
                 r = gh(m, "매출액"); c = gh(m, "매출원가")
-                g = gh(m, "매출총이익"); s = gh(m, "판관비계"); e = gh(m, "영업손익")
+                g = gh(m, "매출총이익"); s = gh(m, "판관비계")
+                e = gh(m, "영업손익"); n = gh(m, "당기순손익")
                 tbl_rows.append({
                     "월": m,
-                    "매출액(만)":   f"{r/10000:,.0f}",
-                    "매출원가율":   f"{c/r*100:.1f}%" if r else "-",
+                    "매출액(만)":     f"{r/10000:,.0f}",
+                    "매출원가율":     f"{c/r*100:.1f}%" if r else "-",
                     "매출총이익(만)": f"{g/10000:,.0f}",
-                    "총이익률":    f"{g/r*100:.1f}%" if r else "-",
-                    "판관비(만)":  f"{s/10000:,.0f}",
-                    "판관비율":    f"{s/r*100:.1f}%" if r else "-",
-                    "영업손익(만)": f"{e/10000:+,.0f}",
-                    "영업이익률":  f"{e/r*100:.1f}%" if r else "-",
+                    "총이익률":       f"{g/r*100:.1f}%" if r else "-",
+                    "판관비(만)":     f"{s/10000:,.0f}",
+                    "판관비율":       f"{s/r*100:.1f}%" if r else "-",
+                    "영업손익(만)":   f"{e/10000:+,.0f}",
+                    "영업이익률":     f"{e/r*100:.1f}%" if r else "-",
+                    "당기순손익(만)": f"{n/10000:+,.0f}" if n != 0.0 else "-",
+                    "순이익률":       f"{n/r*100:.1f}%" if (r and n != 0.0) else "-",
                 })
-            st.markdown("**📋 누적 월별 손익 요약**")
+            st.markdown("**📋 누적 월별 당기순손익 요약**")
             st.dataframe(pd.DataFrame(tbl_rows), use_container_width=True, hide_index=True)
 
             st.markdown("---")
