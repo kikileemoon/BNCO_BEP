@@ -786,9 +786,10 @@ def parse_financial_excel(uploaded_file) -> Optional[dict]:
                         rd[m] = float(v) if isinstance(v, (int, float)) else 0.0
                     tot = ws.cell(row, 2).value
                     rd["계"] = float(tot) if isinstance(tot, (int, float)) else 0.0
-                    # 손실 항목은 음수로 저장
+                    # 손실 행: 양수=실제손실(→음수저장), 음수=실제이익(→양수저장)
+                    # -abs()가 아닌 단순 부호 반전(-v)으로 흑자달 처리
                     if key in ("영업손익", "당기순손익") and "손실" in label:
-                        rd = {k: -abs(v) for k, v in rd.items()}
+                        rd = {k: -v for k, v in rd.items()}
                     found[key] = rd
                     break
 
