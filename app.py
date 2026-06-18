@@ -476,21 +476,30 @@ def parse_daily_sales(raw_data) -> dict:
                 'b2c_daily':      b2c_daily,
                 'b2b_daily':      b2b_daily,
                 'days_with_data': 0,
-                'source':         'Google Sheets (일별 파싱 실패)',
+                'source':         'Google Sheets (월 누계)',
             }
 
         daily_clean    = daily_clean[:last_idx + 1]
         days_with_data = len([v for v in daily_clean if v > 0])
         total          = sum(daily_clean)
 
+        # monthly_total(시트 내 월 누계 셀)이 있으면 항상 우선 사용.
+        # 주간 구조 탭(1W/2W...)에서 weekly값을 일별로 오인해 합산하는 오류 방지.
+        best_total = monthly_total if monthly_total > 0 else (total if total > 0 else FALLBACK_SALES['total'])
+
+        # 일별 배열이 주간값(weekly)인지 확인: 데이터가 5개 이하이고 monthly_total과 크게 다르면 daily는 비움
+        _is_weekly = (days_with_data <= 5 and monthly_total > 0 and
+                      abs(total - monthly_total) > monthly_total * 0.01)
+        actual_daily = [] if _is_weekly else daily_clean
+
         return {
-            'total':          total if total > 0 else monthly_total,
+            'total':          best_total,
             'b2c':            b2c_total,
             'b2b':            b2b_total,
-            'daily':          daily_clean,
+            'daily':          actual_daily,
             'b2c_daily':      b2c_daily,
             'b2b_daily':      b2b_daily,
-            'days_with_data': days_with_data,
+            'days_with_data': days_with_data if not _is_weekly else 0,
             'source':         'Google Sheets 실시간',
         }
     except Exception:
