@@ -1908,6 +1908,11 @@ def main():
             def gh(m, key): return history[m]["data"].get(key, 0.0)
 
             tbl_rows = []
+            # 합계/평균 계산용 누적
+            _sum = {"r":0,"c":0,"g":0,"s":0,"e":0,"n":0}
+            _rate_lists = {"cogs":[],"gp":[],"sga":[],"op":[],"net":[]}
+            _n_months_net = 0  # 당기순손익 데이터 있는 달 수
+
             for m in all_months:
                 r = gh(m, "매출액"); c = gh(m, "매출원가")
                 g = gh(m, "매출총이익"); s = gh(m, "판관비계")
@@ -1925,22 +1930,63 @@ def main():
                     "당기순손익(만)": f"{n/10000:+,.0f}" if n != 0.0 else "-",
                     "순이익률":       f"{n/r*100:.1f}%" if (r and n != 0.0) else "-",
                 })
+                _sum["r"] += r; _sum["c"] += c; _sum["g"] += g
+                _sum["s"] += s; _sum["e"] += e; _sum["n"] += n
+                if r:
+                    _rate_lists["cogs"].append(c/r*100)
+                    _rate_lists["gp"].append(g/r*100)
+                    _rate_lists["sga"].append(s/r*100)
+                    _rate_lists["op"].append(e/r*100)
+                    if n != 0.0:
+                        _rate_lists["net"].append(n/r*100)
+                if n != 0.0:
+                    _n_months_net += 1
+
+            def _avg(lst): return sum(lst)/len(lst) if lst else 0
+
+            # 합계/평균 행 추가
+            _sr = _sum["r"]; _sn = _sum["n"]
+            tbl_rows.append({
+                "월":             "합계 / 평균",
+                "매출액(만)":     f"{_sr/10000:,.0f}",
+                "매출원가율":     f"{_avg(_rate_lists['cogs']):.1f}%",
+                "매출총이익(만)": f"{_sum['g']/10000:,.0f}",
+                "총이익률":       f"{_avg(_rate_lists['gp']):.1f}%",
+                "판관비(만)":     f"{_sum['s']/10000:,.0f}",
+                "판관비율":       f"{_avg(_rate_lists['sga']):.1f}%",
+                "영업손익(만)":   f"{_sum['e']/10000:+,.0f}",
+                "영업이익률":     f"{_avg(_rate_lists['op']):.1f}%",
+                "당기순손익(만)": f"{_sn/10000:+,.0f}" if _n_months_net > 0 else "-",
+                "순이익률":       f"{_avg(_rate_lists['net']):.1f}%" if _rate_lists['net'] else "-",
+            })
+
             st.markdown("**📋 누적 월별 당기순손익 요약**")
             _df_tbl = pd.DataFrame(tbl_rows)
+            _summary_row = "합계 / 평균"
             # 월별 실수값 (부호 판단용)
             _net_num = {m: gh(m, "당기순손익") for m in all_months}
+            _net_num[_summary_row] = _sn  # 합계행도 색상 적용
+
             def _style_net(row):
-                n = _net_num.get(row["월"], 0.0)
+                m = row["월"]
+                n = _net_num.get(m, 0.0)
                 styles = [""] * len(row)
                 if n != 0.0:
-                    # 흑자(양수)=빨강, 손실(음수)=파랑
                     clr = "#dc3545" if n > 0 else "#0d6efd"
-                    css = f"color: {clr}; font-weight: bold"
+                    # 합계행은 볼드+이탤릭으로 강조
+                    fw = "bold italic" if m == _summary_row else "bold"
+                    css = f"color: {clr}; font-weight: {fw}"
                     cols = list(row.index)
                     for _col in ["당기순손익(만)", "순이익률"]:
                         if _col in cols:
                             styles[cols.index(_col)] = css
+                # 합계행 전체 배경 강조
+                if m == _summary_row:
+                    styles = [s + "; background-color: #f0f0f0; font-weight: bold"
+                              if s else "background-color: #f0f0f0; font-weight: bold"
+                              for s in styles]
                 return styles
+
             _styled = _df_tbl.style.apply(_style_net, axis=1)
             st.dataframe(_styled, use_container_width=True, hide_index=True)
 
